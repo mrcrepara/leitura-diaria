@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#2f3b2f">
+<title>Leitura Diária — Salmos & Provérbios</title>
+<link rel="manifest" id="manifest-link">
+<style>
+  :root{
+    --parchment:#f2ead9;
+    --parchment-deep:#e9dfc7;
+    --ink:#2c2620;
+    --ink-soft:#5c5346;
+    --leather:#2f3b2f;
+    --leather-light:#425442;
+    --gold:#a9812f;
+    --gold-soft:#c9a35c;
+    --read:#5c7a52;
+    --shadow:0 2px 6px rgba(44,38,32,.15);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--parchment);
+    color:var(--ink);
+    font-family:'Iowan Old Style','Palatino Linotype',Georgia,serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  header{
+    background:var(--leather);
+    color:var(--parchment);
+    padding:22px 18px 18px;
+    position:sticky;
+    top:0;
+    z-index:10;
+    box-shadow:var(--shadow);
+  }
+  header h1{
+    margin:0;
+    font-size:1.15rem;
+    letter-spacing:.04em;
+    font-weight:600;
+    font-family:'Iowan Old Style',Georgia,serif;
+  }
+  header .sub{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:.72rem;
+    color:var(--gold-soft);
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    margin-top:2px;
+  }
+  .tabs{
+    display:flex;
+    margin-top:16px;
+    border-radius:10px;
+    overflow:hidden;
+    background:rgba(255,255,255,.06);
+  }
+  .tab{
+    flex:1;
+    text-align:center;
+    padding:10px 4px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:.85rem;
+    font-weight:600;
+    color:var(--parchment);
+    opacity:.55;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    transition:opacity .15s;
+  }
+  .tab.active{
+    opacity:1;
+    border-bottom:2px solid var(--gold-soft);
+  }
+  .progress-wrap{
+    margin-top:14px;
+  }
+  .progress-bar{
+    height:6px;
+    border-radius:3px;
+    background:rgba(255,255,255,.15);
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--gold-soft),var(--gold));
+    transition:width .3s;
+  }
+  .progress-label{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:.72rem;
+    color:var(--parchment);
+    opacity:.75;
+    margin-top:5px;
+    display:flex;
+    justify-content:space-between;
+  }
+  main{
+    padding:14px 12px 60px;
+    max-width:640px;
+    margin:0 auto;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(64px,1fr));
+    gap:8px;
+  }
+  .chapter-btn{
+    position:relative;
+    background:#fff;
+    border:1px solid var(--parchment-deep);
+    border-radius:8px;
+    padding:10px 4px;
+    text-align:center;
+    font-size:.95rem;
+    font-weight:600;
+    color:var(--ink);
+    cursor:pointer;
+    box-shadow:var(--shadow);
+    transition:transform .1s;
+  }
+  .chapter-btn:active{transform:scale(.94);}
+  .chapter-btn.read{
+    background:var(--read);
+    color:#fff;
+    border-color:var(--read);
+  }
+  .chapter-btn .num{display:block;}
+  .chapter-btn .check{
+    position:absolute;
+    top:2px;
+    right:4px;
+    font-size:.6rem;
+  }
+  /* Reader modal */
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(20,16,10,.55);
+    display:none;
+    align-items:flex-end;
+    z-index:100;
+  }
+  .overlay.open{display:flex;}
+  .sheet{
+    background:var(--parchment);
+    width:100%;
+    max-height:88vh;
+    border-radius:18px 18px 0 0;
+    box-shadow:0 -4px 20px rgba(0,0,0,.3);
+    display:flex;
+    flex-direction:column;
+    animation:slideUp .22s ease-out;
+  }
+  @keyframes slideUp{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .sheet-header{
+    padding:14px 18px 10px;
+    border-bottom:1px solid var(--parchment-deep);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .sheet-title{
+    font-size:1.05rem;
+    font-weight:700;
+    color:var(--leather);
+  }
+  .sheet-close{
+    background:none;
+    border:none;
+    font-size:1.3rem;
+    color:var(--ink-soft);
+    cursor:pointer;
+    padding:4px 8px;
+  }
+  .sheet-body{
+    padding:16px 20px 8px;
+    overflow-y:auto;
+    flex:1;
+    line-height:1.75;
+    font-size:1.05rem;
+  }
+  .verse-num{
+    color:var(--gold);
+    font-weight:700;
+    font-size:.78em;
+    vertical-align:super;
+    margin-right:2px;
+  }
+  .sheet-footer{
+    padding:14px 18px calc(14px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--parchment-deep);
+  }
+  .mark-btn{
+    width:100%;
+    padding:13px;
+    border:none;
+    border-radius:10px;
+    background:var(--leather);
+    color:var(--parchment);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-weight:700;
+    font-size:.95rem;
+    cursor:pointer;
+  }
+  .mark-btn.read{
+    background:var(--read);
+  }
+  .loading, .error{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    color:var(--ink-soft);
+    font-size:.9rem;
+    padding:20px 0;
+    text-align:center;
+  }
+  .version-tag{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:.68rem;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-top:2px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Leitura Diária</h1>
+  <div class="sub">Salmos &amp; Provérbios</div>
+  <div class="tabs">
+    <div class="tab active" data-book="sl">Salmos (150)</div>
+    <div class="tab" data-book="pv">Provérbios (31)</div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label">
+      <span id="progressText">0 / 150 lidos</span>
+      <span id="progressPct">0%</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="grid" id="grid"></div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <div class="sheet-header">
+      <div>
+        <div class="sheet-title" id="sheetTitle">Salmo 1</div>
+        <div class="version-tag">Almeida Corrigida Fiel</div>
+      </div>
+      <button class="sheet-close" id="sheetClose">✕</button>
+    </div>
+    <div class="sheet-body" id="sheetBody">
+      <div class="loading">A carregar…</div>
+    </div>
+    <div class="sheet-footer">
+      <button class="mark-btn" id="markBtn">Marcar como lido</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BOOKS = {
+  sl: { name: 'Salmo', total: 150, label: 'Salmos' },
+  pv: { name: 'Provérbios', total: 31, label: 'Provérbios' }
+};
+const VERSION = 'acf'; // Almeida Corrigida Fiel
+const STORAGE_KEY = 'leituraDiaria_v1';
+const BIBLE_URL = 'https://raw.githubusercontent.com/thiagobodruk/bible/master/json/pt_acf.json';
+const BOOK_CACHE_PREFIX = 'leituraDiaria_book_acf_';
+
+let currentBook = 'sl';
+let currentChapter = null;
+
+function loadState(){
+  try{
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { sl: {}, pv: {} };
+  }catch(e){ return { sl: {}, pv: {} }; }
+}
+function saveState(state){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+let state = loadState();
+
+function renderGrid(){
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const total = BOOKS[currentBook].total;
+  for(let i=1;i<=total;i++){
+    const btn = document.createElement('div');
+    const isRead = !!state[currentBook][i];
+    btn.className = 'chapter-btn' + (isRead ? ' read' : '');
+    btn.innerHTML = `<span class="num">${i}</span>${isRead ? '<span class="check">✓</span>' : ''}`;
+    btn.onclick = () => openChapter(currentBook, i);
+    grid.appendChild(btn);
+  }
+  updateProgress();
+}
+
+function updateProgress(){
+  const total = BOOKS[currentBook].total;
+  const readCount = Object.keys(state[currentBook]).filter(k => state[currentBook][k]).length;
+  const pct = Math.round((readCount/total)*100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${readCount} / ${total} lidos`;
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentBook = tab.dataset.book;
+    renderGrid();
+  };
+});
+
+// Loads the whole Bible JSON once (public-domain Almeida Corrigida Fiel,
+// served as a static file from GitHub — far more reliable than a live API),
+// extracts just Salmos and Provérbios, and caches those locally so future
+// visits never need the network again.
+async function ensureBookLoaded(bookKey){
+  const cacheKey = BOOK_CACHE_PREFIX + bookKey;
+  const cached = localStorage.getItem(cacheKey);
+  if(cached) return JSON.parse(cached);
+
+  if(!window.__bibleFetchPromise){
+    window.__bibleFetchPromise = fetch(BIBLE_URL).then(res => {
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    });
+  }
+  const allBooks = await window.__bibleFetchPromise;
+
+  const findBook = (abbrevs, nameRegex) => allBooks.find(b =>
+    abbrevs.includes((b.abbrev || '').toLowerCase()) ||
+    nameRegex.test(b.book || b.name || '')
+  );
+  const sl = findBook(['sl', 'sal', 'ps'], /salmo/i);
+  const pv = findBook(['pv', 'pr', 'prv'], /prov[eé]rb/i);
+  if(sl) localStorage.setItem(BOOK_CACHE_PREFIX + 'sl', JSON.stringify(sl.chapters));
+  if(pv) localStorage.setItem(BOOK_CACHE_PREFIX + 'pv', JSON.stringify(pv.chapters));
+
+  const result = localStorage.getItem(cacheKey);
+  if(!result) throw new Error('Livro não encontrado nos dados da Bíblia.');
+  return JSON.parse(result);
+}
+
+async function openChapter(book, chapter){
+  currentChapter = chapter;
+  const overlay = document.getElementById('overlay');
+  const body = document.getElementById('sheetBody');
+  const title = document.getElementById('sheetTitle');
+  const markBtn = document.getElementById('markBtn');
+
+  title.textContent = `${BOOKS[book].name} ${chapter}`;
+  const alreadyCached = !!localStorage.getItem(BOOK_CACHE_PREFIX + book);
+  body.innerHTML = `<div class="loading">${alreadyCached ? 'A carregar…' : 'A obter o texto pela primeira vez (pode demorar alguns segundos)…'}</div>`;
+  overlay.classList.add('open');
+
+  const isRead = !!state[book][chapter];
+  markBtn.textContent = isRead ? '✓ Lido — marcar como não lido' : 'Marcar como lido';
+  markBtn.className = 'mark-btn' + (isRead ? ' read' : '');
+
+  try{
+    const chapters = await ensureBookLoaded(book);
+    const verses = chapters[chapter - 1];
+    if(!verses) throw new Error('Capítulo não encontrado.');
+    body.innerHTML = verses.map((text, i) =>
+      `<span class="verse-num">${i + 1}</span>${text} `
+    ).join('');
+  }catch(e){
+    body.innerHTML = `<div class="error">Não foi possível carregar o texto. Verifica a ligação à internet e tenta novamente.<br><br>(${e.message})</div>`;
+  }
+
+  markBtn.onclick = () => toggleRead(book, chapter);
+}
+
+function toggleRead(book, chapter){
+  const isRead = !!state[book][chapter];
+  if(isRead){
+    delete state[book][chapter];
+  }else{
+    state[book][chapter] = new Date().toISOString();
+  }
+  saveState(state);
+  renderGrid();
+  const markBtn = document.getElementById('markBtn');
+  const nowRead = !!state[book][chapter];
+  markBtn.textContent = nowRead ? '✓ Lido — marcar como não lido' : 'Marcar como lido';
+  markBtn.className = 'mark-btn' + (nowRead ? ' read' : '');
+}
+
+document.getElementById('sheetClose').onclick = () => {
+  document.getElementById('overlay').classList.remove('open');
+};
+document.getElementById('overlay').onclick = (e) => {
+  if(e.target.id === 'overlay') e.target.classList.remove('open');
+};
+
+// PWA manifest (inline, no separate file needed)
+const manifest = {
+  name: "Leitura Diária",
+  short_name: "Leitura",
+  start_url: ".",
+  display: "standalone",
+  background_color: "#f2ead9",
+  theme_color: "#2f3b2f",
+  icons: [{
+    src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%232f3b2f'/%3E%3Ctext x='50' y='68' font-size='60' text-anchor='middle' fill='%23f2ead9'%3E%E2%9C%9D%3C/text%3E%3C/svg%3E",
+    sizes: "192x192",
+    type: "image/svg+xml"
+  }]
+};
+const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
+
+renderGrid();
+</script>
+</body>
+</html>
